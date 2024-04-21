@@ -120,3 +120,16 @@ def gelu(z):
         array_like: The GELU of z.
     """
     return 0.5 * z * (1 + np.tanh(np.sqrt(2 / np.pi) * (z + 0.044715 * np.power(z, 3))))
+
+
+activation_functions = {
+    "relu": relu,
+    "softmax": softmax,
+    "sigmoid": sigmoid,
+    "linear": linear,
+    "gelu": gelu,
+    "elu": elu,
+    "leaky_relu": leaky_relu,
+    "tanh": tanh,
+    "softplus": softplus,
+}

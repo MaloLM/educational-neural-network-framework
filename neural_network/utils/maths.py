@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def sigmoid(z):
     """
     Compute the sigmoid activation function on input z.
@@ -11,6 +12,7 @@ def sigmoid(z):
         array_like: The sigmoid of z.
     """
     return 1 / (1 + np.exp(-z))
+
 
 def linear(z):
     """
@@ -24,6 +26,7 @@ def linear(z):
     """
     return z
 
+
 def relu(z):
     """
     Rectified Linear Unit (ReLU) activation function.
@@ -35,6 +38,7 @@ def relu(z):
         float: max(0.0, z).
     """
     return max(0.0, z)
+
 
 def leaky_relu(z, alpha=0.01):
     """
@@ -49,6 +53,7 @@ def leaky_relu(z, alpha=0.01):
     """
     return np.where(z >= 0, z, alpha * z)
 
+
 def tanh(z):
     """
     Hyperbolic tangent activation function.
@@ -60,6 +65,7 @@ def tanh(z):
         array_like: The hyperbolic tangent of z.
     """
     return np.tanh(z)
+
 
 def softmax(z):
     """
@@ -75,6 +81,7 @@ def softmax(z):
     sum_exp_z = np.sum(exp_z)
     return exp_z / sum_exp_z
 
+
 def softplus(z):
     """
     Softplus activation function.
@@ -86,6 +93,7 @@ def softplus(z):
         array_like: The softplus of z.
     """
     return np.log(1 + np.exp(z))
+
 
 def elu(z, alpha=1.0):
     """
@@ -100,6 +108,7 @@ def elu(z, alpha=1.0):
     """
     return np.where(z >= 0, z, alpha * (np.exp(z) - 1))
 
+
 def gelu(z):
     """
     Gaussian Error Linear Unit (GELU) activation function.
@@ -111,4 +120,3 @@ def gelu(z):
         array_like: The GELU of z.
     """
     return 0.5 * z * (1 + np.tanh(np.sqrt(2 / np.pi) * (z + 0.044715 * np.power(z, 3))))
-

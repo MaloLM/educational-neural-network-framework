@@ -5,11 +5,11 @@ def read_requirements():
         return req.read().splitlines()
 
 setup(
-    name="educationnal-neural-network",
+    name="neural-network",
     version="1.0",
     description="Python implementation of an artificial neural network aimed at deeply mastering the underlying concepts that drive neural networks. This project is inspired by Andrej Karpathy and Russ Salakhutdinov.",
     author="Malo Le Mestre",
     author_email="malo.lm@icloud.com",
-    packages=["educationnal-neural-network"],
+    packages=["neural_network"],
     install_requires=read_requirements(),
 )

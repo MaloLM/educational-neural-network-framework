@@ -1,91 +1,85 @@
+
+import math
 import numpy as np
-import neural_network.utils.activation as activation
+import neural_network.utils.activation as activations
+import neural_network.utils.optimizers as optimizers
 
 
 class Neuron:
-    """
-    Represents a single neuron within a neural network layer, encapsulating the activation function, bias, and weights.
 
-    Attributes:
-        id (int): A unique identifier for the neuron.
-        activation_func (callable): The activation function to use for this neuron.
-        bias (float): The bias term for the neuron, initialized randomly.
-        weights (numpy.ndarray): The weights for the inputs connected to this neuron.
-        input_values (list): The inputs to this neuron from the previous layer.
+    def __init__(self, id, activation: str) -> None:
 
-    Methods:
-        initialize_weights(num_inputs): Initializes weights for the neuron based on the number of inputs.
-        forward_propagate(): Conducts forward propagation through this neuron by calculating the activated output.
-        summing(): Computes the weighted sum of inputs plus the bias.
-        activate(): Applies the activation function to the sum of inputs.
-    """
-
-    def __init__(self, id, activation_func: str) -> None:
-        """
-        Initializes a Neuron instance with a specified activation function.
-
-        Args:
-            id (int): A unique identifier for the neuron.
-            activation_func (str): The name of the activation function to use.
-
-        Raises:
-            ValueError: If the specified activation function is not available.
-        """
         self.id = id
+        self.random_generator = np.random.default_rng()
+
+        self.set_activation(activation)
+
+        self.bias = 0
+        self.x0 = 1.0
+        self.opt = None
+        self.weights = []
+        self.input_values = []
+        self.output = None
+        self.weights_gradients = None
+        self.bias_gradient = None
+
+    def set_activation(self, activation_name):
         try:
-            self.activation_func = activation.activation_functions[activation_func]
+            self.activation = activations.activation_functions[activation_name]
         except KeyError:
             raise ValueError(
-                f"Activation function '{activation_func}' is not defined. Please select between {list(activation.activation_functions.keys())}.")
+                f"Activation function '{activation_name}' is not defined. Please select between {list(activations.activation_functions.keys())}.")
 
-        self.bias = np.random.rand()
-        self.x0 = 1.0
-        self.weigths = []
-        self.input_values = []
-
-    def initialize_weights(self, num_inputs):
-        """
-        Initializes random weights for this neuron based on the number of input connections.
-
-        Args:
-            num_inputs (int): The number of input connections to this neuron.
-        """
-        self.weights = np.random.randn(num_inputs)
-
-    def forward_propagate(self):
-        """
-        Processes the inputs through this neuron using its activation function.
-
-        Raises:
-            ValueError: If the number of weights does not match the number of inputs.
-        """
-        if len(self.weigths) != len(self.input_values):
+    def set_optimizer(self, opt: str):
+        try:
+            self.opt = optimizers.optimizers[opt]
+        except KeyError:
             raise ValueError(
-                "Neuron weigths and neuron inputs are not of the same number.")
-        net_input = self.summing()
-        self.activate(net_input)
+                f"Activation function '{opt}' is not defined. Please select between {list(optimizers.optimizers.keys())}.")
 
-    def summing(self):
-        """
-        Calculates the weighted sum of the neuron's inputs plus its bias.
+    def initialize_weights(self, input_size):
 
-        Returns:
-            float: The net input to the activation function.
+        def glorot_initialization(input_size):
+            return -1/math.sqrt(input_size), 1/math.sqrt(input_size)
 
-        Raises:
-            ValueError: If inputs or weights have not been initialized.
-        """
-        if not self.input_values or not self.weights:
+        def he_initialization(input_size):
+            return -math.sqrt(6/input_size), math.sqrt(6/input_size)
+
+        border = glorot_initialization(input_size)
+
+        self.weights = self.random_generator.uniform(
+            border[0], border[1], input_size)
+
+    def initialize_gradients(self, input_size):
+        self.weights_gradients = np.zeros(input_size)
+        self.bias_gradient = 0.0
+
+    def forward(self):
+
+        if len(self.weights) != len(self.input_values):
+            raise ValueError(
+                f"Neuron weights and neuron inputs are not of the same number: {len(self.weights)} vs {len(self.input_values)}")
+
+        self.logits = self.linear_combination()
+
+        self.output = self.activate()
+
+    def linear_combination(self):
+
+        if not (self.input_values and self.weights).any():
             raise ValueError("Inputs or weights are not initialized.")
 
         net_input = np.dot(self.weights, self.input_values) + self.bias
         return net_input
 
-    def activate(self, net_input):
-        """
-        Applies the activation function to the net input to get the neuron's output.
+    def activate(self):
+        if isinstance(self.activation, activations.Softmax):  # DIRTY CODE TO REFACTOR with OOP
+            return self.logits
+        else:
+            return self.activation.function(self.logits)
 
-        Returns:
-            float: The output of the neuron after activation.
-        """
-        return self.activation_func(net_input)
+    def update_weights(self):
+        self.weights = self.opt.update(self.weights, self.weights_gradients)
+
+    def update_bias(self):
+        self.bias = self.opt.update(self.bias, self.bias_gradient)

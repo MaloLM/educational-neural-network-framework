@@ -1,39 +1,45 @@
 from neural_network.layers.layer import Layer
+import numpy as np
 
 
 class InputLayer(Layer):
-    """
-    Represents the input layer of a neural network, primarily handling the input data size without containing any neurons or activation functions.
-
-    Inherits from:
-        Layer: The abstract base class for network layers.
-
-    Attributes:
-        input_size (int): The size of the input data that this layer will receive.
-
-    Methods:
-        count_params(): Returns the number of trainable parameters in the input layer, which is always zero as this layer contains no neurons.
-    """
 
     def __init__(self, name, input_size) -> None:
-        """
-        Initializes an InputLayer that sets up the input dimensions for a neural network.
 
-        Args:
-            name (str): The name of the layer, useful for identifying the layer within the network.
-            input_size (int): The number of input features or the size of the input data vector.
-
-        Notes:
-            This layer does not have neurons or an activation function since its primary role is to receive input data.
-        """
         super().__init__(name, 0, None)
         self.input_size = input_size
 
     def count_params(self):
-        """
-        Overrides the count_params method from Layer to return zero, as there are no trainable parameters in an input layer.
 
-        Returns:
-            int: Returns 0, indicating no trainable parameters in the input layer.
-        """
         return 0
+
+    def flatten(self, input):
+
+        if isinstance(input, list):
+            flat_output = [item for sublist in input for item in (
+                sublist if isinstance(sublist, list) else [sublist])]
+        else:
+            flat_output = np.ravel(input).tolist()
+
+        if len(flat_output) == self.input_size:
+            return flat_output
+        else:
+            raise ValueError(
+                f"The length of the flattened input is {len(flat_output)}, which does not match the expected size of {self.input_size}. Ensure that your input data is correctly formatted and contains the right number of elements.")
+
+    def forward(self, input):
+        # print(f"forward to {self.name}")
+        flattened_input = self.flatten(input)
+        self.inputs.append(input)
+        self.outputs.append(flattened_input)
+
+        return flattened_input, None
+
+    def initiate_weights_and_gradients(self, *args, **kwargs):
+        pass
+
+    def initialize_gradients(self):
+        pass
+
+    def get_width(self):
+        return self.input_size

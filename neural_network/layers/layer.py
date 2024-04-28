@@ -1,59 +1,54 @@
 from abc import ABC, abstractmethod
-
 from neural_network.neuron import Neuron
 
 
 class Layer(ABC):
-    """
-    Abstract base class for different types of layers in a neural network. Defines common attributes and requires implementation of specific functionality in subclasses.
 
-    Attributes:
-        name (str): The name of the layer, which helps in identifying it within the network.
-        neurons (list of Neuron): A list containing the neuron objects in this layer.
-        activation_func (str): The activation function used by neurons in this layer.
-        prev_lay_num_neurons (int): The number of neurons in the previous layer, used to link layers together.
-
-    Methods:
-        count_params(): Abstract method that should return the total number of trainable parameters in this layer.
-    """
-
-    def __init__(self, name, num_neurons, activation_func) -> None:
-        """
-        Initializes a Layer with a given number of neurons, each using the specified activation function.
-
-        Args:
-            name (str): The name of the layer.
-            num_neurons (int): The number of neurons to initialize in the layer.
-            activation_func (str): The activation function name for all neurons in the layer.
-
-        Notes:
-            All neurons in the layer are initialized with the same activation function. The `Neuron` initialization may raise
-            a ValueError if the activation function name is not recognized.
-        """
+    def __init__(self, name, num_neurons, activation) -> None:
 
         self.name = name
-        self.neurons = []
-        self.activation_func = activation_func
-        self.prev_lay_num_neurons = None
+        self.opt = None
+        self.activation = activation
+        self.input_layer = None
+        self.neurons = [Neuron(id, activation)
+                        for id in range(num_neurons)]
 
-        for neuron in range(num_neurons):
-            self.neurons.append(Neuron(neuron, "relu"))
+        # values history for backprop
+        self.inputs = []
+        self.logits = []
+        self.outputs = []
+
+    def reset_data(self):
+        self.inputs = []
+        self.logits = []
+        self.outputs = []
+
+    def tmp_print_data(self):
+        print(len(self.inputs))
+        print(len(self.logits))
+        print(len(self.outputs))
 
     def __str__(self) -> str:
-        """
-        Provides a string representation of the layer, including its name, number of neurons, activation function, and total parameters.
 
-        Returns:
-            str: A formatted string that describes the layer.
-        """
-        return f"name: {self.name}\nneurons: {len(self.neurons)}\nactivation function: {self.activation_func} \nparams: {self.count_params()}"
+        return f"name: {self.name}\nneurons: {len(self.neurons)}\nactivation function: {self.activation} \nparams: {self.count_params()}"
+
+    def set_optimizer(self, opt: str):
+        for neuron in self.neurons:
+            neuron.set_optimizer(opt)
 
     @abstractmethod
     def count_params(self):
-        """
-        Abstract method to be implemented by subclasses that returns the number of trainable parameters in this layer.
 
-        Returns:
-            int: The number of trainable parameters in the layer.
-        """
         pass
+
+    @abstractmethod
+    def forward(self, input):
+        pass
+
+    @abstractmethod
+    def initiate_weights_and_gradients(self):
+        pass
+
+    
+
+

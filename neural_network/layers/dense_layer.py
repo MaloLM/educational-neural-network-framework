@@ -1,45 +1,45 @@
+from neural_network.layers.input_layer import InputLayer
 from neural_network.layers.layer import Layer
 
 
 class DenseLayer(Layer):
-    """
-    Represents a fully connected (dense) layer in a neural network, where each neuron in this layer is connected to all neurons in the previous layer.
 
-    Inherits from:
-        Layer: The abstract base class for network layers.
+    def __init__(self, name, num_neurons, activation) -> None:
 
-    Attributes:
-        name (str): The name of the layer.
-        neurons (list of Neuron): A list of neurons in this layer, each using the specified activation function.
-        activation_func (str): The activation function applied to the output of each neuron in this layer.
-        prev_lay_num_neurons (int): The number of neurons in the previous layer.
-
-    Methods:
-        count_params(): Calculates and returns the total number of trainable parameters in this dense layer.
-    """
-
-    def __init__(self, name, num_neurons, activation_func) -> None:
-        """
-        Initializes a DenseLayer with a specified number of neurons and activation function.
-
-        Args:
-            name (str): The name of the layer, which can be used for identification within the network.
-            num_neurons (int): The total number of neurons in this dense layer.
-            activation_func (str): The activation function name for the neurons in this layer.
-
-        Notes:
-            The initialization ensures that all neurons are connected to every neuron in the previous layer, and each neuron in this layer will use the given activation function.
-        """
-        super().__init__(name, num_neurons, activation_func)
+        super().__init__(name, num_neurons, activation)
 
     def count_params(self):
-        """
-        Calculates the total number of trainable parameters in this dense layer, including weights and biases.
 
-        The formula for calculating parameters is given by:
-        (number of neurons in the previous layer * number of neurons in this layer) + number of biases (one per neuron).
+        num_bias = len(self.neurons)
+        input_len = len(self.input_layer.neurons)
+        num_neurons = len(self.neurons)
 
-        Returns:
-            int: The total number of trainable parameters in the layer.
-        """
-        return self.prev_lay_num_neurons * len(self.neurons) + len(self.neurons)
+        return input_len * num_neurons + num_bias
+
+    def forward(self, input):
+        # print(f"forward to {self.name}")
+        output = []
+        logits = []
+
+        for neuron in self.neurons:
+            neuron.input_values = input
+            neuron.forward()
+            output.append(neuron.output)
+            logits.append(neuron.logits)
+
+        self.inputs.append(input)
+        self.logits.append(logits)
+        self.outputs.append(output)
+
+        return output, logits
+
+    def initiate_weights_and_gradients(self, init_weights=True, init_gradients=True):
+        input_size = self.input_layer.get_width()
+        for neuron in self.neurons:
+            if init_weights:
+                neuron.initialize_weights(input_size)
+            if init_gradients:
+                neuron.initialize_gradients(input_size)
+
+    def get_width(self):
+        return len(self.neurons)

@@ -1,135 +1,148 @@
+from abc import ABC, abstractmethod
 import numpy as np
 
 
-def sigmoid(z):
-    """
-    Compute the sigmoid activation function on input z.
+class ActivationFunction(ABC):
+    @abstractmethod
+    def function(self, x):
+        pass
 
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
-
-    Returns:
-        array_like: The sigmoid of z.
-    """
-    return 1 / (1 + np.exp(-z))
+    @abstractmethod
+    def derivative(self, output, *args, **kwargs):
+        pass
 
 
-def linear(z):
-    """
-    Linear activation function.
+class Softmax(ActivationFunction):
+    def function(self, z):
+        exp_z = np.exp(z - np.max(z))  # for numerical stability
+        return exp_z / exp_z.sum(axis=0)
 
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
+    def derivative(self, output, y_true):
+        output = np.array(output)
+        y_true = np.array(y_true)
 
-    Returns:
-        array_like: Same as input z.
-    """
-    return z
-
-
-def relu(z):
-    """
-    Rectified Linear Unit (ReLU) activation function.
-
-    Parameters:
-        z (float): Input scalar value.
-
-    Returns:
-        float: max(0.0, z).
-    """
-    return max(0.0, z)
+        return output - y_true
 
 
-def leaky_relu(z, alpha=0.01):
-    """
-    Leaky Rectified Linear Unit (Leaky ReLU) activation function.
+class ReLU(ActivationFunction):
+    def function(self, x):
 
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
-        alpha (float, optional): Coefficient of leakage. Default is 0.01.
+        return np.maximum(0, x)
 
-    Returns:
-        array_like: Leaky ReLU of z.
-    """
-    return np.where(z >= 0, z, alpha * z)
+    def derivative(self, output, *args, **kwargs):
 
-
-def tanh(z):
-    """
-    Hyperbolic tangent activation function.
-
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
-
-    Returns:
-        array_like: The hyperbolic tangent of z.
-    """
-    return np.tanh(z)
+        # print(output)
+        output = np.array(output)
+        # print(output)
+        return np.where(output > 0, 1, 0)
 
 
-def softmax(z):
-    """
-    Softmax function for converting input vector to a probability distribution.
+class Sigmoid(ActivationFunction):
+    def function(self, x):
 
-    Parameters:
-        z (array_like): Input vector, typically raw logit values from the last neural network layer.
+        return 1 / (1 + np.exp(-x))
 
-    Returns:
-        array_like: A vector of probabilities where each element is the probability of corresponding class.
-    """
-    exp_z = np.exp(z - np.max(z))  # for numerical stability
-    sum_exp_z = np.sum(exp_z)
-    return exp_z / sum_exp_z
+    def derivative(self, output):
+
+        return output * (1 - output)
 
 
-def softplus(z):
-    """
-    Softplus activation function.
+class Identity(ActivationFunction):
+    def function(self, x):
 
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
+        return x
 
-    Returns:
-        array_like: The softplus of z.
-    """
-    return np.log(1 + np.exp(z))
+    def derivative(self, output):
+
+        return np.ones_like(output)
 
 
-def elu(z, alpha=1.0):
-    """
-    Exponential Linear Unit (ELU) activation function.
+class LeakyReLU(ActivationFunction):
+    def __init__(self, alpha=0.01):
 
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
-        alpha (float, optional): The scaling factor for negative values. Default is 1.0.
+        self.alpha = alpha
 
-    Returns:
-        array_like: The ELU of z.
-    """
-    return np.where(z >= 0, z, alpha * (np.exp(z) - 1))
+    def function(self, x):
+
+        return np.where(x > 0, x, self.alpha * x)
+
+    def derivative(self, output):
+
+        dx = np.ones_like(output)
+        dx[output < 0] = self.alpha
+        return dx
 
 
-def gelu(z):
-    """
-    Gaussian Error Linear Unit (GELU) activation function.
+class Tanh(ActivationFunction):
+    def function(self, x):
 
-    Parameters:
-        z (array_like): Input data (scalar, vector, or matrix).
+        return np.tanh(x)
 
-    Returns:
-        array_like: The GELU of z.
-    """
-    return 0.5 * z * (1 + np.tanh(np.sqrt(2 / np.pi) * (z + 0.044715 * np.power(z, 3))))
+    def derivative(self, output):
+
+        return 1 - np.power(output, 2)
+
+
+class Softplus(ActivationFunction):
+    def function(self, x):
+
+        return np.log(1 + np.exp(x))
+
+    def derivative(self, output):
+
+        return 1 / (1 + np.exp(-output))
+
+
+class ELU(ActivationFunction):
+    def __init__(self, alpha=1.0):
+
+        self.alpha = alpha
+
+    def function(self, x):
+
+        return np.where(x > 0, x, self.alpha * (np.exp(x) - 1))
+
+    def derivative(self, output):
+
+        return np.where(output > 0, 1, output + self.alpha)
+
+
+class GELU(ActivationFunction):
+    def function(self, x):
+
+        return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+
+    def derivative(self, x):
+
+        c = np.sqrt(2 / np.pi)
+        return 0.5 * (1 + np.tanh(c * (x + 0.044715 * np.power(x, 3)))) \
+            + 0.5 * x * (1 - np.tanh(c * (x + 0.044715 * np.power(x, 3))) ** 2) \
+            * c * (1 + 3 * 0.044715 * x * x)
+
+
+class Passthrough(ActivationFunction):
+    def function(self, z):
+        return z
+
+    def derivative(self, z):
+        return z
 
 
 activation_functions = {
-    "relu": relu,
-    "softmax": softmax,
-    "sigmoid": sigmoid,
-    "linear": linear,
-    "gelu": gelu,
-    "elu": elu,
-    "leaky_relu": leaky_relu,
-    "tanh": tanh,
-    "softplus": softplus,
+    "relu": ReLU(),
+    "softmax": Softmax(),
+    "sigmoid": Sigmoid(),
+    "logistic": Sigmoid(),
+    "linear": Identity(),
+    "identity": Identity(),
+    "gelu": GELU(),
+    "elu": ELU(),
+    "leaky_relu": LeakyReLU(),
+    "tanh": Tanh(),
+    "softplus": Softplus(),
+    "passthrough": Passthrough(),
+    "none": Passthrough(),
+    "": Passthrough(),
+    None: Passthrough(),
+
 }

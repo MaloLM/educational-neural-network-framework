@@ -14,19 +14,59 @@ from IPython.display import clear_output
 
 
 class NeuralNetwork:
+    """
+        Represents a neural network which is a series of layers designed to mimic the learning process of 
+        the human brain. This structure is used to solve complex problems like image recognition, language 
+        processing, and autonomous driving through a process called training.
+
+        Attributes:
+            loss_func (callable): The function used to calculate the difference between the expected output
+                                and the predictions made by the network.
+            optimizer (Optimizer): An algorithm or method used to change the attributes of the neural network
+                                such as weights and learning rate in order to reduce the losses.
+            cumulative_batch_accuracy (list): A list to store the accuracy of each batch during training.
+            cumulative_batch_loss (list): A list to store the loss of each batch during training.
+            model_serializer (ModelSerializer): Handles saving and loading of the model's state.
+        """
 
     def __init__(self, layers: list, opt: opt.Optimizer, loss: str) -> None:
+        """
+        Initializes the neural network with given layers, an optimizer, and a loss function.
 
+        Args:
+            layers (list): A list of layers to include in the neural network.
+            opt (Optimizer): The optimizer to use for training the network.
+            loss (str): The name of the loss function to use.
+        """
         self.loss_func = loss
         self.optimizer = opt
         self.cumulative_batch_accuracy = []
         self.cumulative_batch_loss = []
-        self.model_compatibility(layers)
+        self.__model_compatibility(layers)
         self.__compile(layers)
         self.model_serializer = ModelSerializer("mnist_model")
 
-    def model_compatibility(self, layers):
+    def __str__(self) -> str:
+        """
+        Provides a string representation of the neural network showing the total number of trainable parameters
+        and a description of each layer.
 
+        Returns:
+            str: Description of the neural network.
+        """
+        total_params = self.__count_total_params()
+        return "\n".join([
+            f"Total params: {total_params}",
+            *(f"{layer}\n------------------------" for layer in self.layers)
+        ])
+
+    def __model_compatibility(self, layers):
+        """
+        Validates if the given layers are compatible with the expected structure of the neural network.
+
+        Raises:
+            ValueError: If the layers do not meet the expected criteria.
+        """
         if not all(isinstance(layer, Layer) for layer in layers):
             raise ValueError(
                 "All elements of layers must be instances of the Layer class")
@@ -51,7 +91,15 @@ class NeuralNetwork:
                 f"Optimiser '{self.optimizer}' is unknown. Please select between {list(opt.optimizers.keys())}.")
 
     def __compile(self, layers, init_weights: bool = True, init_gradients: bool = True):
+        """
+        Sets up the neural network by assigning each layer its input layer, initializing weights and gradients,
+        and setting the optimizer.
 
+        Args:
+            layers (list): The layers of the network.
+            init_weights (bool): If True, initializes weights for each layer.
+            init_gradients (bool): If True, initializes gradients for each layer.
+        """
         self.layers = layers
 
         previous_layer = None
@@ -72,10 +120,25 @@ class NeuralNetwork:
                 raise ValueError(
                     f"input of layer {i+1} called '{layers[i+1].name}' does not match output of layer {i} called '{layers[i].name}'. {len(layers[i].neurons)} vs {len(layers[i+1].input_layer.neurons)}")
 
-    def count_total_params(self):
+    def __count_total_params(self):
+        """
+        Calculates the total number of trainable parameters across all layers in the neural network.
+
+        Returns:
+            int: The total number of parameters.
+        """
         return sum(layer.count_params() for layer in self.layers)
 
-    def sample_forward(self, sample_input):
+    def __sample_forward(self, sample_input):
+        """
+        Performs a forward pass through the network using a single sample input.
+
+        Args:
+            sample_input (array-like): Input data for a single example.
+
+        Returns:
+            tuple: Output of the network and the logit values from the last layer.
+        """
         layer_input = sample_input
 
         for layer in self.layers:
@@ -86,51 +149,34 @@ class NeuralNetwork:
         return res_output, logit
 
     def predict(self, input):
-        prediction, _ = self.sample_forward(input)
+        """
+        Generates a prediction for the given input using the network.
+
+        Args:
+            input (array-like): The input data.
+
+        Returns:
+            array-like: The predicted outputs.
+        """
+        prediction, _ = self.__sample_forward(input)
         return prediction
 
-    def validate_old(self, data_samples, data_labels, batch_size=2):
-
-        if len(data_samples) != len(data_labels):
-            raise ValueError("Samples and labels must be of the same length")
-
-        if len(data_samples) < batch_size:
-            raise ValueError(
-                "Samples number should be superior or equal to provided batch size")
-
-        predictions = []
-        true_labels = []
-
-        sample_batches = self.batching(data_samples, batch_size)
-        labels_batches = self.batching(data_labels, batch_size)
-
-        for idx, batch in enumerate(sample_batches):
-
-            labels = labels_batches[idx]
-
-            for j, sample in enumerate(batch):
-
-                sample_prediction = self.predict(sample)
-                sample_prediction = np.array(sample_prediction)
-                class_prediction = np.argmax(sample_prediction, axis=0)
-
-                predictions.append(class_prediction)
-                true_labels.append(labels[j])
-
-        predictions = np.array(predictions)
-        true_labels = np.array(true_labels)
-
-        precision = precision_score(true_labels, predictions)
-        recall = recall_score(true_labels, predictions)
-        f1 = f1_score(true_labels, predictions)
-        accuracy = accuracy_score(true_labels, predictions)
-
-        print(f"Precision: {precision:.2f}/1.00")
-        print(f"Recall: {recall:.2f}/1.00")
-        print(f"F1 Score: {f1:.2f}/1.00")
-        print(f"Accuracy: {accuracy:.2f}/1.00")
-
     def validate(self, data_samples, data_labels, batch_size=2):
+        """
+        Validates the model using the provided data samples and labels, computes metrics like precision, recall,
+        F1 score, and accuracy, and generates a confusion matrix.
+
+        Args:
+            data_samples (list): Input data samples for validation.
+            data_labels (list): Actual labels for the data samples.
+            batch_size (int): Number of samples to process in each batch.
+
+        Raises:
+            ValueError: If data_samples and data_labels lengths do not match or if batch size is too large.
+
+        Note:
+            Requires matplotlib for plotting the confusion matrix.
+        """
         import matplotlib.pyplot as plt
         if len(data_samples) != len(data_labels):
             raise ValueError("Samples and labels must be of the same length")
@@ -179,7 +225,16 @@ class NeuralNetwork:
         class_labels = [str(i) for i in range(num_classes)]
         plot_confusion_matrix(confusion_matrix, class_labels)
 
-    def batch_forward(self, batch):
+    def __batch_forward(self, batch):
+        """
+        Processes a batch of samples through the network.
+
+        Args:
+            batch (list): List of input samples.
+
+        Returns:
+            tuple: Predictions and logits for the batch.
+        """
         if len(batch) <= 0:
             raise ValueError("Batch should not be empty")
 
@@ -187,18 +242,39 @@ class NeuralNetwork:
         logits = []
 
         for sample in batch:
-            sample_prediction, logit = self.sample_forward(sample)
+            sample_prediction, logit = self.__sample_forward(sample)
             predictions.append(sample_prediction)
             logits.append(logit)
 
         return predictions, logits
 
     def batching(self, data, batch_size):
+        """
+        Splits the data into batches of specified size.
+
+        Args:
+            data (list): The dataset to be batched.
+            batch_size (int): The size of each batch.
+
+        Returns:
+            list: List of batches.
+        """
         data_array = np.array(data)
         return [data_array[i:i + batch_size] for i in range(0, len(data), batch_size)]
 
     def fit(self, samples, labels, batch_size, epochs=1):
+        """
+        Trains the model using the provided samples and labels for a specified number of epochs and batch size.
 
+        Args:
+            samples (list): The input samples for training.
+            labels (list): The labels corresponding to the input samples.
+            batch_size (int): The number of samples in each training batch.
+            epochs (int): The number of times the training data will be iterated over.
+
+        Raises:
+            ValueError: If samples and labels do not match in length or if batch size is larger than sample size.
+        """
         if len(samples) != len(labels):
             raise ValueError("Samples and labels are not of the same number.")
 
@@ -214,7 +290,7 @@ class NeuralNetwork:
             for idx, batch in enumerate(x_batches):
                 clear_output(wait=True)
 
-                preds, _ = self.batch_forward(batch)
+                preds, _ = self.__batch_forward(batch)
 
                 true_labels = y_batches[idx]
 
@@ -237,11 +313,23 @@ class NeuralNetwork:
                      self.cumulative_batch_accuracy)
 
     def __clear_data(self):
+        """
+        Clears accumulated data in each layer of the network. This is typically called after each batch
+        has been processed during training to reset the network state for the next batch.
+        """
         for layer in self.layers:
             layer.clear_data()
 
     def __backpropagate(self, one_hot_encoded_labels):
+        """
+        Performs the backpropagation algorithm, which is crucial for training neural networks. 
+        Backpropagation updates the model's weights by calculating gradients of the loss function 
+        with respect to each weight.
 
+        Args:
+            one_hot_encoded_labels (array): The one-hot encoded true labels for the current batch, used to
+                                            calculate the loss gradient.
+        """
         output_layer = self.layers[-1]
 
         loss_gradient = self.loss_func.gradient(
@@ -256,21 +344,38 @@ class NeuralNetwork:
             inputs = np.array(
                 self.layers[layer_index - 1].outputs if layer_index > 1 else self.layers[0].outputs)
 
-            self.update_gradients(layer, inputs, delta)
+            self.__update_gradients(layer, inputs, delta)
 
             if layer_index > 1:  # No need to propagate to the input layer
 
-                delta = self.propagate_to_previous_layer(layer, delta)
+                delta = self.__propagate_to_previous_layer(layer, delta)
 
-    def calculate_initial_loss_gradient(self, loss, output_layer, labels):
-        return loss.derivative(output_layer.logits, labels)
+    def __update_gradients(self, layer, inputs, delta):
+        """
+        Updates gradients for each neuron in a given layer based on the delta values computed during 
+        backpropagation.
 
-    def update_gradients(self, layer, inputs, delta):
+        Args:
+            layer (Layer): The current layer where gradients need updating.
+            inputs (array): Inputs to the layer, used to calculate the gradient of weights.
+            delta (array): The error term for each neuron, used to adjust weights and biases.
+        """
         for neuron_index, neuron in enumerate(layer.neurons):
             neuron.weights_gradients = np.dot(inputs.T, delta[:, neuron_index])
             neuron.bias_gradient = np.sum(delta[:, neuron_index], axis=0)
 
-    def propagate_to_previous_layer(self, current_layer, delta):
+    def __propagate_to_previous_layer(self, current_layer, delta):
+        """
+        Calculates the delta for the previous layer based on the current layer's delta and weights. This
+        function is part of the backpropagation process, propagating the error backwards through the network.
+
+        Args:
+            current_layer (Layer): The current layer in the backpropagation process.
+            delta (array): The error term from the current layer.
+
+        Returns:
+            array: The calculated delta for the previous layer.
+        """
         previous_layer = self.layers[self.layers.index(current_layer) - 1]
         weighted_deltas = np.zeros(
             (delta.shape[0], len(previous_layer.neurons)))
@@ -291,6 +396,10 @@ class NeuralNetwork:
         return new_delta
 
     def __update_params(self):
+        """
+        Updates the parameters (weights and biases) of each neuron in every layer except the input layer.
+        This is the final step in each training iteration after backpropagation.
+        """
         for layer in self.layers:
             if not isinstance(layer, InputLayer):
                 for neuron in layer.neurons:
@@ -298,22 +407,34 @@ class NeuralNetwork:
                     neuron.update_bias()
 
     def one_hot_encode(self, labels, num_classes):
+        """
+        Converts a list of labels to one-hot encoded format.
+
+        Args:
+            labels (list): List of integer labels to be encoded.
+            num_classes (int): The number of distinct classes.
+
+        Returns:
+            array: A matrix of one-hot encoded labels.
+        """
         one_hot_encoded = np.zeros((len(labels), num_classes), dtype=int)
         one_hot_encoded[np.arange(len(labels)), labels] = 1
 
         return one_hot_encoded
 
-    def __str__(self) -> str:
-        total_params = self.count_total_params()
-        return "\n".join([
-            f"Total params: {total_params}",
-            *(f"{layer}\n------------------------" for layer in self.layers)
-        ])
-
     def save(self):
+        """
+        Saves the current state of the neural network model using the model serializer.
+        """
         self.model_serializer.save_model(self)
 
     def load(self):
+        """
+        Loads a previously saved state of the neural network model using the model serializer.
+
+        After loading, it recompiles the model without initializing weights and gradients to maintain the
+        previously trained state.
+        """
         layers, optimizer, loss = self.model_serializer.load_model()
         self.optimizer = optimizer
         self.loss_func = loss
@@ -338,7 +459,7 @@ class NeuralNetwork:
                 print(
                     f"----- Batch n°{batch_idx + 1}, batchlen= {len(batch)}\n")
 
-                self.batch_forward(batch)
+                self.__batch_forward(batch)
 
                 true_labels = y_batches[epoch_index]
 
@@ -361,12 +482,12 @@ class NeuralNetwork:
                             # Calculation of numerical gradient
                             # Positive perturbation
                             neuron.weights[weight_idx] = original_weight + epsilon
-                            loss_plus = self.loss_func.loss(self.batch_forward(batch)[
+                            loss_plus = self.loss_func.loss(self.__batch_forward(batch)[
                                                             0], one_hot_encoded_labels)
 
                             # Negative perturbation
                             neuron.weights[weight_idx] = original_weight - epsilon
-                            loss_minus = self.loss_func.loss(self.batch_forward(batch)[
+                            loss_minus = self.loss_func.loss(self.__batch_forward(batch)[
                                 0], one_hot_encoded_labels)
 
                             # Restore the original weight value
@@ -409,7 +530,7 @@ class NeuralNetwork:
         for _ in range(epochs):
             for idx, batch in enumerate(x_batches):
                 if idx in [1, 3, 5]:
-                    preds, _ = self.batch_forward(batch)
+                    preds, _ = self.__batch_forward(batch)
 
                     true_labels = y_batches[idx]
 

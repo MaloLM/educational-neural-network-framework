@@ -4,17 +4,53 @@ import numpy as np
 
 
 class Loss(ABC):
+    """
+    Abstract base class for loss functions in a neural network.
+
+    Loss functions measure the inconsistency between predicted outputs and the actual target values,
+    providing a numeric representation of model performance. This class serves as a template for loss
+    functions, requiring the implementation of `loss` and `gradient` methods.
+
+    Methods:
+        loss(preds, one_hot_true_labels): Calculates the loss value.
+        gradient(preds, one_hot_true_labels): Computes the gradient of the loss function.
+    """
 
     @abstractmethod
     def loss(self, preds, one_hot_true_labels):
+        """
+        Computes the loss between predictions and true labels.
+
+        Args:
+            preds (list or np.ndarray): The predictions made by the network.
+            one_hot_true_labels (list or np.ndarray): The true labels in a one-hot encoded format.
+
+        Returns:
+            float: The calculated loss.
+        """
         pass
 
     @abstractmethod
     def gradient(self, preds, one_hot_true_labels):
+        """
+        Computes the gradient of the loss function with respect to the predictions.
+
+        Args:
+            preds (list or np.ndarray): The predictions made by the network.
+            one_hot_true_labels (list or np.ndarray): The true labels in a one-hot encoded format.
+
+        Returns:
+            np.ndarray: The gradients of the loss function.
+        """
         pass
 
 
 class MeanSquaredError(Loss):
+    """
+    Mean Squared Error (MSE) loss, used typically for regression problems.
+
+    Calculates the average of the squares of the differences between predicted values and actual values.
+    """
 
     def loss(self, preds, one_hot_true_labels):
         one_hot_true_labels = np.array(one_hot_true_labels)
@@ -30,6 +66,11 @@ class MeanSquaredError(Loss):
 
 
 class MeanAbsoluteError(Loss):
+    """
+    Mean Absolute Error (MAE) loss, commonly used for regression.
+
+    Calculates the average of the absolute differences between predicted values and actual values.
+    """
 
     def loss(self, preds, one_hot_true_labels):
         one_hot_true_labels = np.array(one_hot_true_labels)
@@ -46,6 +87,12 @@ class MeanAbsoluteError(Loss):
 
 
 class BinaryCrossEntropy(Loss):
+    """
+    Binary Cross Entropy loss, used for binary classification problems.
+
+    Calculates the loss for binary classification tasks by penalizing the probability based on how far
+    it is from the actual label.
+    """
 
     def sigmoid(self, z):
         return 1 / (1 + np.exp(-z))
@@ -69,6 +116,12 @@ class BinaryCrossEntropy(Loss):
 
 
 class CategoricalCrossEntropy(Loss):
+    """
+    Categorical Cross Entropy loss, used for multi-class classification problems.
+
+    Measures the performance of a classification model whose output is a probability value between 0 and 1.
+    Categorical cross entropy loss increases as the predicted probability diverges from the actual label.
+    """
 
     def softmax(self, logits):
         exps = np.exp(logits - np.max(logits, axis=1, keepdims=True))

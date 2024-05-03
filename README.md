@@ -2,6 +2,29 @@
 
 This project is a Python implementation of an artificial neural network framework aimed at deeply understanding the fundamental concepts behind neural networks and deep learning. This project is inspired by Andrej Karpathy and Russ Salakhutdinov, who strongly recommend implementing such frameworks for educational purposes.
 
+This framework enable user to implemente train and test neural network architectures:
+
+```python
+from neural_network.network import NeuralNetwork
+from neural_network.layers.input_layer import InputLayer
+from neural_network.layers.dense_layer import DenseLayer
+from neural_network.layers.output_layer import OutputLayer
+
+model = [
+    InputLayer("input", 784),
+    DenseLayer("hidden", 256, activation="relu"),
+    DenseLayer("hidden", 128, activation="relu"),
+    DenseLayer("hidden2", 32, activation="relu"),
+    OutputLayer("output", 10, activation="softmax")
+]
+
+network = NeuralNetwork(model, opt="adam" , loss="cce")
+
+network.fit(samples=x_train, labels=y_train, batch_size=600, epochs=4)
+
+network.validate(x_test, y_test)
+```
+
 ## Results on MNIST
 
 As an educational project (focusing on my own mastery of deep learning concepts), this framework is primarily compatible with solving multi-class problems (>2). It was designed to address the problem of digit recognition using the MNIST database.
@@ -30,4 +53,4 @@ The `mnist_with_tensorflow.ipynb` notebook compares this implementation with Ten
 - Enhance the complexity of the framework by implementing additional types of layers such as Dropout, convolutions...
 - Improve the compatibility of activation functions, optimizers, and loss functions to enrich the framework.
 - Enable saving and loading a model (hyperparameters, weights, biases...).
-- Optimize memory usage (numpy, Cython...).
+- Optimize memory and CPU usage (numpy, Cython...).

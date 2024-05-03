@@ -31,9 +31,7 @@ class ReLU(ActivationFunction):
 
     def derivative(self, output, *args, **kwargs):
 
-        # print(output)
         output = np.array(output)
-        # print(output)
         return np.where(output > 0, 1, 0)
 
 

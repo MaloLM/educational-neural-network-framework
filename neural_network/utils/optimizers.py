@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-
 import numpy as np
 
 
@@ -9,46 +8,51 @@ class Optimizer(ABC):
 
     @abstractmethod
     def update(self, params, grads):
-
         pass
 
 
 class SGD(Optimizer):
-    def __init__(self, learning_rate=0.01, name="sgd"):
+    def __init__(self, learning_rate=0.0001, name="sgd"):
         super().__init__(learning_rate)
         self.name = name
 
-    def update(self, params, grads):
-        # Itère sur tous les paramètres et leurs gradients correspondants
-        for param, grad in zip(params, grads):
-            # Mise à jour des paramètres avec SGD
+    def update(self, weights, grads, *args, **kwargs):
+        for param, grad in zip(weights, grads):
             param -= self.learning_rate * grad
+
+        return weights
 
 
 class GradientDescent:
-    def __init__(self, learning_rate=0.01, name="gradient descent"):
+    def __init__(self, learning_rate=0.0001, name="gradient descent"):
         self.learning_rate = learning_rate
         self.name = name
 
-    def update(self, weights, gradient):
-        res = weights - self.learning_rate * gradient
-        return res
+    def update(self, params, gradient, *args, **kwargs):
+
+        params = np.array(params)
+        gradient = np.array(gradient)
+
+        return params - self.learning_rate * gradient
 
 
-class Momentum(Optimizer):
-    def __init__(self, learning_rate=0.01, momentum=0.9, name="momentum gradient descend"):
-        super().__init__(learning_rate)
+class GradientDescentWithMomentum:
+    def __init__(self, learning_rate=0.0001, momentum=0.8):
+        self.learning_rate = learning_rate
         self.momentum = momentum
-        self.velocity = None
-        self.name = name
+        self.velocities = {}
 
-    def update(self, params, grads):
-        if self.velocity is None:
-            self.velocity = [np.zeros_like(param) for param in params]
+    def update(self, weights, gradient, layer_name):
+        weights = np.array(weights)
+        gradient = np.array(gradient)
 
-        for param, grad, vel in zip(params, grads, self.velocity):
-            vel[:] = self.momentum * vel + self.learning_rate * grad
-            param -= vel
+        if layer_name not in self.velocities:
+            self.velocities[layer_name] = np.zeros_like(weights)
+
+        self.velocities[layer_name] = self.momentum * \
+            self.velocities[layer_name] + self.learning_rate * gradient
+
+        return weights - self.velocities[layer_name]
 
 
 class RMSprop(Optimizer):
@@ -79,19 +83,27 @@ class Adam(Optimizer):
         self.t = 0
         self.name = name
 
-    def update(self, params, grads):
+    def update(self, params, grads, *args, **kwargs):
         if self.m is None or self.v is None:
-            self.m = [np.zeros_like(param) for param in params]
-            self.v = [np.zeros_like(param) for param in params]
+            self.m = [np.zeros_like(p) for p in params]
+            self.v = [np.zeros_like(p) for p in params]
 
         self.t += 1
         alpha_t = self.learning_rate * \
-            np.sqrt(1 - self.beta2 ** self.t) / (1 - self.beta1 ** self.t)
+            (np.sqrt(1 - self.beta2 ** self.t) / (1 - self.beta1 ** self.t))
 
-        for param, grad, m, v in zip(params, grads, self.m, self.v):
-            m[:] = self.beta1 * m + (1 - self.beta1) * grad
-            v[:] = self.beta2 * v + (1 - self.beta2) * np.square(grad)
-            param -= alpha_t * m / (np.sqrt(v) + self.epsilon)
+        new_params = []
+
+        for i, (param, grad) in enumerate(zip(params, grads)):
+            self.m[i] = self.beta1 * self.m[i] + (1 - self.beta1) * grad
+            self.v[i] = self.beta2 * self.v[i] + \
+                (1 - self.beta2) * np.square(grad)
+
+            param_update = self.m[i] / (np.sqrt(self.v[i]) + self.epsilon)
+            new_param = param - alpha_t * param_update
+            new_params.append(new_param)
+
+        return np.array(new_params)
 
 
 def is_optimizer_defined(opt: str):
@@ -106,8 +118,8 @@ optimizers = {
     "gradient descent": GradientDescent(),
     "sgd": SGD(),
     "stochastic gradient descent": SGD(),
-    "momentum gradient descend": Momentum(),
-    "momentum": Momentum(),
+    "momentum gradient descend": GradientDescentWithMomentum(),
+    "momentum": GradientDescentWithMomentum(),
     "RMSprop": RMSprop(),
     "rms": RMSprop(),
     "adam": Adam(),

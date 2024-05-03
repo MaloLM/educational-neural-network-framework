@@ -1,0 +1,7 @@
+tensorflow 
+cv2
+os
+numpy 
+matplotlib
+setuptools
+h5py

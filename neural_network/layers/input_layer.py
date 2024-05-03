@@ -1,4 +1,5 @@
 from neural_network.layers.layer import Layer
+from itertools import chain
 import numpy as np
 
 
@@ -14,12 +15,14 @@ class InputLayer(Layer):
         return 0
 
     def flatten(self, input):
-
         if isinstance(input, list):
-            flat_output = [item for sublist in input for item in (
-                sublist if isinstance(sublist, list) else [sublist])]
+            try:
+                flat_output = list(chain.from_iterable(input))
+            except TypeError:
+                flat_output = [item for sublist in input for item in (
+                    sublist if isinstance(sublist, list) else [sublist])]
         else:
-            flat_output = np.ravel(input).tolist()
+            flat_output = np.ravel(input)
 
         if len(flat_output) == self.input_size:
             return flat_output
@@ -28,7 +31,6 @@ class InputLayer(Layer):
                 f"The length of the flattened input is {len(flat_output)}, which does not match the expected size of {self.input_size}. Ensure that your input data is correctly formatted and contains the right number of elements.")
 
     def forward(self, input):
-        # print(f"forward to {self.name}")
         flattened_input = self.flatten(input)
         self.inputs.append(input)
         self.outputs.append(flattened_input)
@@ -36,9 +38,11 @@ class InputLayer(Layer):
         return flattened_input, None
 
     def initiate_weights_and_gradients(self, *args, **kwargs):
+        # Placeholder method - should be implemented in subclasses that require initializations of weights and gradients.
         pass
 
     def initialize_gradients(self):
+        # Placeholder method - should be implemented in subclasses that require initializations of weights and gradients.
         pass
 
     def get_width(self):

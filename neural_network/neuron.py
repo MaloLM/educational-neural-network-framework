@@ -1,4 +1,3 @@
-
 import math
 import numpy as np
 import neural_network.utils.activation as activations
@@ -17,7 +16,7 @@ class Neuron:
         self.bias = 0
         self.x0 = 1.0
         self.opt = None
-        self.weights = []
+        self.weights = None
         self.input_values = []
         self.output = None
         self.weights_gradients = None
@@ -37,18 +36,46 @@ class Neuron:
             raise ValueError(
                 f"Activation function '{opt}' is not defined. Please select between {list(optimizers.optimizers.keys())}.")
 
-    def initialize_weights(self, input_size):
+    def initialize_weights(self, input_size, method='glorot'):
+        if method == 'glorot':
+            borders = self.glorot_initialization(input_size)
+        elif method == 'he':
+            borders = self.he_initialization(input_size)
+        elif method == 'uniform':
+            borders = self.uniform_initialization()
+        elif method == 'normal':
+            borders = self.normal_initialization()
+        elif method == 'sparse':
+            self.weights = self.sparse_initialization(input_size)
+            return
+        else:
+            raise ValueError("Unknown initialization method.")
 
-        def glorot_initialization(input_size):
-            return -1/math.sqrt(input_size), 1/math.sqrt(input_size)
+        self.weights = np.random.uniform(
+            borders[0], borders[1], size=input_size)
 
-        def he_initialization(input_size):
-            return -math.sqrt(6/input_size), math.sqrt(6/input_size)
+    def glorot_initialization(self, input_size):
+        limit = math.sqrt(6 / input_size)
+        return -limit, limit
 
-        border = glorot_initialization(input_size)
+    def he_initialization(self, input_size):
+        limit = math.sqrt(2 / input_size)
+        return -limit, limit
 
-        self.weights = self.random_generator.uniform(
-            border[0], border[1], input_size)
+    def uniform_initialization(self):
+        return -1.0, 1.0  # Customize as needed
+
+    def normal_initialization(self):
+        mean = 0
+        std_dev = 1
+        self.weights = self.random_generator.normal(
+            mean, std_dev, self.input_size)
+        return None  # No borders to return
+
+    def sparse_initialization(self, input_size, sparsity=0.1):
+        sparse_weights = np.random.choice(
+            [0, 1], size=input_size, p=[1-sparsity, sparsity])
+        return np.random.randn(input_size) * sparse_weights
 
     def initialize_gradients(self, input_size):
         self.weights_gradients = np.zeros(input_size)
@@ -65,12 +92,12 @@ class Neuron:
         self.output = self.activate()
 
     def linear_combination(self):
-
-        if not (self.input_values and self.weights).any():
+        if len(self.input_values) != len(self.weights) and len(self.input_values) <= 0:
+            print(self.input_values)
+            print(self.weights, "\n")
             raise ValueError("Inputs or weights are not initialized.")
 
-        net_input = np.dot(self.weights, self.input_values) + self.bias
-        return net_input
+        return np.dot(self.weights, self.input_values) + self.bias
 
     def activate(self):
         if isinstance(self.activation, activations.Softmax):  # DIRTY CODE TO REFACTOR with OOP
@@ -78,8 +105,15 @@ class Neuron:
         else:
             return self.activation.function(self.logits)
 
-    def update_weights(self):
-        self.weights = self.opt.update(self.weights, self.weights_gradients)
+    def update_weights(self, layer_name):
+        self.weights = self.opt.update(
+            self.weights, self.weights_gradients, layer_name)
 
-    def update_bias(self):
-        self.bias = self.opt.update(self.bias, self.bias_gradient)
+    def update_bias(self, layer_name="None"):
+        self.bias = self.opt.update(
+            [self.bias], [self.bias_gradient], layer_name)
+        self.bias = self.bias[0]
+
+    def zero_grads(self):
+        self.bias_gradient = None
+        self.weights_gradients = None

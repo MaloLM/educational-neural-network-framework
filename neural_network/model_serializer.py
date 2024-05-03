@@ -4,8 +4,6 @@ from neural_network.layers.input_layer import InputLayer
 from neural_network.layers.dense_layer import DenseLayer
 from neural_network.layers.output_layer import OutputLayer
 
-
-# Ensuite, vous pouvez directement utiliser InputLayer pour instancier un objet
 input_layer_instance = InputLayer
 dense_layer_instance = DenseLayer
 output_layer_instance = OutputLayer

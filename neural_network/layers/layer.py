@@ -13,20 +13,18 @@ class Layer(ABC):
         self.neurons = [Neuron(id, activation)
                         for id in range(num_neurons)]
 
-        # values history for backprop
         self.inputs = []
         self.logits = []
         self.outputs = []
 
-    def reset_data(self):
+    def clear_data(self):
         self.inputs = []
         self.logits = []
         self.outputs = []
 
-    def tmp_print_data(self):
-        print(len(self.inputs))
-        print(len(self.logits))
-        print(len(self.outputs))
+        for neuron in self.neurons:
+            if isinstance(neuron, Neuron):
+                neuron.zero_grads()
 
     def __str__(self) -> str:
 
@@ -38,7 +36,6 @@ class Layer(ABC):
 
     @abstractmethod
     def count_params(self):
-
         pass
 
     @abstractmethod
@@ -48,7 +45,3 @@ class Layer(ABC):
     @abstractmethod
     def initiate_weights_and_gradients(self):
         pass
-
-    
-
-

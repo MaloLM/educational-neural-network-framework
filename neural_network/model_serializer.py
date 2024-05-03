@@ -8,6 +8,10 @@ input_layer_instance = InputLayer
 dense_layer_instance = DenseLayer
 output_layer_instance = OutputLayer
 
+# --------------------------------
+# # This code is not fully working
+# --------------------------------
+
 
 class ModelSerializer:
     """

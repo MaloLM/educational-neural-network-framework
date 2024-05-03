@@ -9,8 +9,8 @@ from neural_network.utils.plots import plot_confusion_matrix, plot_history
 import neural_network.utils.optimizers as opt
 import neural_network.utils.loss as loss
 
-import numpy as np
 from IPython.display import clear_output
+import numpy as np
 
 
 class NeuralNetwork:
@@ -422,24 +422,24 @@ class NeuralNetwork:
 
         return one_hot_encoded
 
-    def save(self):
-        """
-        Saves the current state of the neural network model using the model serializer.
-        """
-        self.model_serializer.save_model(self)
+    # def save(self):
+    #     """
+    #     Saves the current state of the neural network model using the model serializer.
+    #     """
+    #     self.model_serializer.save_model(self)
 
-    def load(self):
-        """
-        Loads a previously saved state of the neural network model using the model serializer.
+    # def load(self):
+    #     """
+    #     Loads a previously saved state of the neural network model using the model serializer.
 
-        After loading, it recompiles the model without initializing weights and gradients to maintain the
-        previously trained state.
-        """
-        layers, optimizer, loss = self.model_serializer.load_model()
-        self.optimizer = optimizer
-        self.loss_func = loss
+    #     After loading, it recompiles the model without initializing weights and gradients to maintain the
+    #     previously trained state.
+    #     """
+    #     layers, optimizer, loss = self.model_serializer.load_model()
+    #     self.optimizer = optimizer
+    #     self.loss_func = loss
 
-        self.__compile(layers, init_weights=False, init_gradients=False)
+    #     self.__compile(layers, init_weights=False, init_gradients=False)
 
     # --- TESTING
 

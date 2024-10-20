@@ -38,7 +38,7 @@ The results highlight the learning capabilities of the model.
 
 The validation test shows accuracy ranging from 92-95%. Goal of this project was not to achieve 99% accuracy but decent learning capabilities, since this implementation is from scratch.
 
-However, a test with a second, smaller dataset of hand-written digits formatted in the same way yields poorer results (shown bellow).
+However, a test with a second, smaller dataset of hand-written digits formatted in the same way yields poorer results (shown bellow). A basic hypothesis would be overfitting on the MNIST dataset features so the model struggles with slightly different pixel colorations.
 
 ![](/data/images/devset_perf.png "Devset performances")
 

@@ -55,4 +55,4 @@ The `mnist_with_tensorflow.ipynb` notebook compares this implementation with Ten
 - Enhance the complexity of the framework by implementing additional types of layers such as Dropout, convolutions...
 - Improve the compatibility of activation functions, optimizers, and loss functions to enrich the framework.
 - Enable saving and loading a model (hyperparameters, weights, biases...).
-- Optimize memory and CPU usage (numpy, Cython...).
+- Optimize memory and CPU usage (numpy, Cython, Cupy...).

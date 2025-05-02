@@ -46,7 +46,7 @@ However, a test with a second, smaller dataset of hand-written digits formatted 
 
 I have not focused much on improving the results of this test since it is not the project's goal, but there is room for improvement, especially in data formatting more than in the neural network's capability. For more details on the data from the second validation test, see the notebook titled: `image_extraction_for_devset_validation.ipynb`.
 
-I also suspect this implementation to overfit on the MNIST dataset so it struggles with slightly different data representation such as the test one. In order to improve this, I suggest to implement Dropout layers so the neural network is more capable of generalization and less sensitive to overfitting.
+I also suspect this implementation to overfit on the MNIST dataset so it struggles with slightly different data representation such as the test one. In order to improve this, I suggest implementing regularization techniques such as Dropout layers, so the neural network is more capable of generalization and less sensitive to high variance.
 
 The `mnist_with_tensorflow.ipynb` notebook compares this implementation with TensorFlow, a leading industry deep learning framework.
 
